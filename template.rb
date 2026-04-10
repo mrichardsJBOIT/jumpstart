@@ -11,9 +11,17 @@ def add_template_repository_to_source_path
     require "tmpdir"
     source_paths.unshift(tempdir = Dir.mktmpdir("jumpstart-"))
     at_exit { FileUtils.remove_entry(tempdir) }
+    repository = template_repository
+
+    unless repository
+      say "\nJumpstart could not determine which repository to clone from #{__FILE__}.", :green
+      say "Please use the raw GitHub URL for template.rb or run the template from a local checkout.", :green
+      exit 1
+    end
+
     git clone: [
       "--quiet",
-      "https://github.com/#{template_repository}.git",
+      "https://github.com/#{repository}.git",
       tempdir
     ].map(&:shellescape).join(" ")
 
@@ -30,8 +38,6 @@ def template_repository
     match[1]
   elsif (match = __FILE__.match(%r{\Ahttps?://github\.com/([^/]+/[^/]+)/blob/.+/template\.rb\z}))
     match[1]
-  else
-    "mrichardsJBOIT/jumpstart"
   end
 end
 
