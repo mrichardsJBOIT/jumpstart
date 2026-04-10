@@ -1,3 +1,8 @@
+### 2026-04-10
+
+* Support Rails 8.1
+* Test against Ruby 4.0 and Rails 8.1 in CI
+
 ### 2021-12-27
 
 * Support Rails 7.0

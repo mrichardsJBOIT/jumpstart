@@ -10,9 +10,9 @@ This is a Rails template, so you pass it in as an option when creating a new app
 
 You'll need the following installed to run the template successfully:
 
-* Ruby 2.5 or higher
+* Ruby 4.0.2 (latest stable as of April 2026; Rails 8.1 requires Ruby 3.2+)
 * bundler - `gem install bundler`
-* rails - `gem install rails`
+* Rails 8.1 - `gem install rails -v "~> 8.1.0"`
 * Database - we recommend Postgres, but you can use MySQL, SQLite3, etc
 * Redis - For ActionCable support
 * ImageMagick or libvips for ActiveStorage variants
@@ -22,13 +22,13 @@ You'll need the following installed to run the template successfully:
 #### Creating a new app
 
 ```bash
-rails new myapp -d postgresql -m https://raw.githubusercontent.com/excid3/gorails-app-template/master/template.rb
+rails _8.1.3_ new myapp -d postgresql -m https://raw.githubusercontent.com/mrichardsJBOIT/jumpstart/main/template.rb
 ```
 
 Or if you have downloaded this repo, you can reference template.rb locally:
 
 ```bash
-rails new myapp -d postgresql -m template.rb
+rails _8.1.3_ new myapp -d postgresql -m template.rb
 ```
 
 ❓Having trouble? Try adding `DISABLE_SPRING=1` before `rails new`. Spring will get confused if you create an app with the same name twice.
