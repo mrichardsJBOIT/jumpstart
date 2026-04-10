@@ -11,13 +11,21 @@ def add_template_repository_to_source_path
     require "tmpdir"
     source_paths.unshift(tempdir = Dir.mktmpdir("jumpstart-"))
     at_exit { FileUtils.remove_entry(tempdir) }
+    repository = template_repository
+
+    unless repository
+      say "\nJumpstart could not determine which repository to clone from #{__FILE__}.", :green
+      say "Please use the raw GitHub URL for template.rb or run the template from a local checkout.", :green
+      exit 1
+    end
+
     git clone: [
       "--quiet",
-      "https://github.com/excid3/jumpstart.git",
+      "https://github.com/#{repository}.git",
       tempdir
     ].map(&:shellescape).join(" ")
 
-    if (branch = __FILE__[%r{jumpstart/(.+)/template.rb}, 1])
+    if (branch = template_branch)
       Dir.chdir(tempdir) { git checkout: branch }
     end
   else
@@ -25,29 +33,39 @@ def add_template_repository_to_source_path
   end
 end
 
-def read_gemfile?
-  File.open("Gemfile").each_line do |line|
-    return true if line.strip.start_with?("rails") && line.include?("6.")
+def template_repository
+  if (match = __FILE__.match(%r{\Ahttps?://raw\.githubusercontent\.com/([^/]+/[^/]+)/.+/template\.rb\z}))
+    match[1]
+  elsif (match = __FILE__.match(%r{\Ahttps?://github\.com/([^/]+/[^/]+)/blob/.+/template\.rb\z}))
+    match[1]
+  end
+end
+
+def template_branch
+  if (match = __FILE__.match(%r{\Ahttps?://raw\.githubusercontent\.com/[^/]+/[^/]+/(.+)/template\.rb\z}))
+    match[1]
+  elsif (match = __FILE__.match(%r{\Ahttps?://github\.com/[^/]+/[^/]+/blob/(.+)/template\.rb\z}))
+    match[1]
   end
 end
 
 def rails_version
-  @rails_version ||= Gem::Version.new(Rails::VERSION::STRING) || read_gemfile?
+  @rails_version ||= Gem::Version.new(Rails::VERSION::STRING)
 end
 
-def rails_7_or_newer?
-  Gem::Requirement.new(">= 7.0.0.alpha").satisfied_by? rails_version
+def rails_8_1_or_newer?
+  Gem::Requirement.new(">= 8.1.0").satisfied_by? rails_version
 end
 
-unless rails_7_or_newer?
-  say "\nJumpstart requires Rails 7 or newer. You are using #{rails_version}.", :green
+unless rails_8_1_or_newer?
+  say "\nJumpstart requires Rails 8.1 or newer. You are using #{rails_version}.", :green
   say "Please remove partially installed Jumpstart files #{original_app_name} and try again.", :green
   exit 1
 end
 
 def add_gems
   add_gem 'cssbundling-rails'
-  add_gem 'devise', '~> 4.9'
+  add_gem 'devise', '~> 5.0'
   add_gem 'friendly_id', '~> 5.4'
   add_gem 'jsbundling-rails'
   add_gem 'madmin'
@@ -58,7 +76,7 @@ def add_gems
   add_gem 'omniauth-twitter', '~> 1.4'
   add_gem 'pretender', '~> 0.3.4'
   add_gem 'pundit', '~> 2.1'
-  add_gem 'sidekiq', '~> 6.2'
+  add_gem 'sidekiq', '~> 8.0'
   add_gem 'sitemap_generator', '~> 6.1'
   add_gem 'whenever', require: false
   add_gem 'responders', github: 'heartcombo/responders', branch: 'main'
@@ -84,8 +102,6 @@ def add_users
     migration = Dir.glob("db/migrate/*").max_by { |f| File.mtime(f) }
     gsub_file migration, /:admin/, ":admin, default: false"
   end
-
-  gsub_file "config/initializers/devise.rb", /  # config.secret_key = .+/, "  config.secret_key = Rails.application.credentials.secret_key_base"
 
   inject_into_file("app/models/user.rb", "omniauthable, :", after: "devise :")
 end
